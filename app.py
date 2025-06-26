@@ -20,6 +20,7 @@ with open('onehot_encoder_geo.pkl', 'rb') as file:
 with open('scaler.pkl', 'rb') as file:
     scaler = pickle.load(file)
 
+
 ## streamlit app
 st.title('Customer Churn Prediction')
 
@@ -48,7 +49,9 @@ input_data = pd.DataFrame({
     'Balance': [balance],
     'NumOfProducts': [num_of_products],
     'HasCrCard': [has_cr_card],
-    'IsActiveMember': [is_active_member]
+    'IsActiveMember': [is_active_member],
+    'EstimatedSalary': [estimated_salary],
+    'Exited': [0]
 })
 
 # One-hot encode 'Geography'
@@ -58,26 +61,14 @@ geo_encoded_df = pd.DataFrame(geo_encoded, columns=onehot_encoder_geo.get_featur
 # Combine one-hot encoded columns with input data
 input_data = pd.concat([input_data.reset_index(drop=True), geo_encoded_df], axis=1)
 
-# Ensure all columns used during training are present and in the correct order
-TRAIN_COLUMNS = [
-    'CreditScore', 'Gender', 'Age', 'Tenure', 'Balance', 'NumOfProducts',
-    'HasCrCard', 'IsActiveMember'
-] + list(onehot_encoder_geo.get_feature_names_out(['Geography']))
-
-for col in TRAIN_COLUMNS:
-    if col not in input_data.columns:
-        input_data[col] = 0  # Add missing columns as zeros
-
-input_data = input_data[TRAIN_COLUMNS]  # Reorder columns to match training
-
 # Scale the input data
 input_data_scaled = scaler.transform(input_data)
 
-# Predict churn probability
+
+# Predict churn
 prediction = model.predict(input_data_scaled)
 prediction_proba = prediction[0][0]
 
-# Display the result
 st.write(f'Churn Probability: {prediction_proba:.2f}')
 
 if prediction_proba > 0.5:
